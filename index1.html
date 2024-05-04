@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<style>
+
+body {
+    background-image: url("/static/R.png");
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    text-align: center;
+}
+
+
+h1 {
+  text-align: center;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  color: white;
+  font-size: 70px;
+  text-decoration:dotted;
+}
+h2{
+ text-align: center;
+ font-size: 35px;
+ color: rgb(255, 255, 255);
+}
+h4{
+ text-align: center;
+ color: deepskyblue;
+ font-size: 30px;
+}
+
+#symptom-selector {
+  margin: 20px auto;
+  width: 50%;
+}
+
+#predict-button {
+border-radius: 4px;
+background-color: deepskyblue; 
+border: none;
+color: solid #000000;
+text-align: center;
+text-justify: inherit;
+font-size: 18px;
+padding: 10px 32px;
+width: 200px;
+transition: all 0.5s;
+cursor: pointer;
+margin: 4px 2px;
+ /*background-color: #a700d1; 
+  border: none;
+  color: white; 18 , 10 32
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration:none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  border-radius: 8px;*/
+}
+#predict-button span {
+cursor: pointer;
+display: inline-block;
+position: relative;
+transition: 0.5s;
+}
+#predict-button span::after {
+content: '\00bb';
+position: absolute;
+opacity: 0;
+top: 0;
+right: -20px;
+transition: 0.5s;
+}
+#predict-button:hover span {
+ padding-right: 25px;
+  /*background-color: #680f85; */
+}
+#predict-button:hover span::after {
+ opacity: 1;
+ right: 0;
+  /*background-color: #680f85; */
+}
+
+#prediction-result {
+  text-align: center;
+  font-weight: bold;
+  font-size: 35px;
+  color: #FFFFFF;
+}
+
+#symptom-selector {
+    max-height: 300px; /* Set maximum height for the container */
+    overflow-y: auto; /* Enable vertical scrolling */
+    margin: 0 auto;
+    width: 400px; /* Adjust as needed */
+    position: relative; /* Position relative for arrow positioning */
+    color: #FFFFFF;
+    font-size: 20px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.scroll-down-arrow {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+}
+
+.scroll-down-arrow::after {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    border: solid rgb(255, 255, 255);
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+
+
+.checkbox input[type="checkbox"] {
+    /* Hide the default checkbox */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    -ms-appearance: none;
+    -o-appearance: none;
+    position: relative;
+}
+
+/* Style the custom checkbox */
+.checkbox input[type="checkbox"]::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border: 2px solid blue; /* Border color for unchecked state */
+    border-radius: 4px;
+    margin-right: 5px;
+}
+
+/* Style the custom checkbox when checked */
+.checkbox input[type="checkbox"]:checked::before {
+    background-color: deepskyblue; /* Background color for checked state */
+    border-color: deepskyblue; /* Border color for checked state */
+}
+
+</style>
+
+<script>
+
+    const symptomList = ["anxiety and nervousness","depression","shortness of breath","depressive or psychotic symptoms","sharp chest pain","dizziness","insomnia","abnormal involuntary movements","chest tightness","palpitations","irregular heartbeat","breathing fast","hoarse voice","sore throat","difficulty speaking","cough","nasal congestion","throat swelling","diminished hearing","lump in throat","throat feels tight","difficulty in swallowing","skin swelling","retention of urine","groin mass","leg pain","hip pain","suprapubic pain","blood in stool","lack of growth","emotional symptoms","elbow weakness","back weakness","pus in sputum","symptoms of the scrotum and testes","swelling of scrotum","pain in testicles","flatulence","pus draining from ear","jaundice","mass in scrotum","white discharge from eye","irritable infant","abusing alcohol","fainting","hostile behavior","drug abuse","sharp abdominal pain","feeling ill","vomiting","headache","nausea","diarrhea","vaginal itching","vaginal dryness","painful urination","involuntary urination","pain during intercourse","frequent urination","lower abdominal pain","vaginal discharge","blood in urine","hot flashes","intermenstrual bleeding","hand or finger pain","wrist pain","hand or finger swelling","arm pain","wrist swelling","arm stiffness or tightness","arm swelling","hand or finger stiffness or tightness","wrist stiffness or tightness","lip swelling","toothache","abnormal appearing skin","skin lesion","acne or pimples","dry lips","facial pain","mouth ulcer","skin growth","eye deviation","diminished vision","double vision","cross-eyed","symptoms of eye","pain in eye","eye moves abnormally","abnormal movement of eyelid","foreign body sensation in eye","irregular appearing scalp","swollen lymph nodes","back pain","neck pain","low back pain","pain of the anus","pain during pregnancy","pelvic pain","impotence","infant spitting up","vomiting blood","regurgitation","burning abdominal pain","restlessness","symptoms of infants","wheezing","peripheral edema","neck mass","ear pain","jaw swelling","mouth dryness","neck swelling","knee pain","foot or toe pain","bowlegged or knock-kneed","ankle pain","bones are painful","knee weakness","elbow pain","knee swelling","skin moles","knee lump or mass","weight gain","problems with movement","knee stiffness or tightness","leg swelling","foot or toe swelling","heartburn","smoking problems","muscle pain","infant feeding problem","recent weight loss","problems with shape or size of breast","underweight","difficulty eating","scanty menstrual flow","vaginal pain","vaginal redness","vulvar irritation","weakness","decreased heart rate","increased heart rate","bleeding or discharge from nipple","ringing in ear","plugged feeling in ear","itchy ear(s)","frontal headache","fluid in ear","neck stiffness or tightness","spots or clouds in vision","eye redness","lacrimation","itchiness of eye","blindness","eye burns or stings","itchy eyelid","feeling cold","decreased appetite","excessive appetite","excessive anger","loss of sensation","focal weakness","slurring words","symptoms of the face","disturbance of memory","paresthesia","side pain","fever","shoulder pain","shoulder stiffness or tightness","shoulder weakness","arm cramps or spasms","shoulder swelling","tongue lesions","leg cramps or spasms","abnormal appearing tongue","ache all over","lower body pain","problems during pregnancy","spotting or bleeding during pregnancy","cramps and spasms","upper abdominal pain","stomach bloating","changes in stool appearance","unusual color or odor to urine","kidney mass","swollen abdomen","symptoms of prostate","leg stiffness or tightness","difficulty breathing","rib pain","joint pain","muscle stiffness or tightness","pallor","hand or finger lump or mass","chills","groin pain","fatigue","abdominal distention","regurgitation.1","symptoms of the kidneys","melena","flushing","coughing up sputum","seizures","delusions or hallucinations","shoulder cramps or spasms","joint stiffness or tightness","pain or soreness of breast","excessive urination at night","bleeding from eye","rectal bleeding","constipation","temper problems","coryza","wrist weakness","eye strain","hemoptysis","lymphedema","skin on leg or foot looks infected","allergic reaction","congestion in chest","muscle swelling","pus in urine","abnormal size or shape of ear","low back weakness","sleepiness","apnea","abnormal breathing sounds","excessive growth","elbow cramps or spasms","feeling hot and cold","blood clots during menstrual periods","absence of menstruation", "pulling at ears","gum pain","redness in ear", "fluid retention", "flu-like syndrome","sinus congestion","painful sinuses","fears and phobias","recent pregnancy","uterine contractions","burning chest pain","back cramps or spasms","stiffness all over","muscle cramps, contractures, or spasms","low back cramps or spasms","back mass or lump","nosebleed","long menstrual periods","heavy menstrual flow","unpredictable menstruation","painful menstruation","infertility","frequent menstruation","sweating","mass on eyelid","swollen eye","eyelid swelling","eyelid lesion or rash","unwanted hair","symptoms of bladder","irregular appearing nails","itching of skin","hurts to breath","nailbiting","skin dryness, peeling, scaliness, or roughness","skin on arm or hand looks infected","skin irritation","itchy scalp","hip swelling","incontinence of stool","foot or toe cramps or spasms","warts","bumps on penis","too little hair","foot or toe lump or mass","skin rash","mass or swelling around the anus","low back swelling","ankle swelling","hip lump or mass","drainage in throat","dry or flaky scalp","premenstrual tension or irritability","feeling hot","feet turned in","foot or toe stiffness or tightness","pelvic pressure","elbow swelling","elbow stiffness or tightness","early or late onset of menopause","mass on ear","bleeding from ear","hand or finger weakness","low self-esteem","throat irritation","itching of the anus","swollen or red tonsils","irregular belly button","swollen tongue","lip sore","vulvar sore","hip stiffness or tightness","mouth pain","arm weakness","leg lump or mass","disturbance of smell or taste","discharge in stools","penis pain","loss of sex drive","obsessions and compulsions","antisocial behavior","neck cramps or spasms","pupils unequal","poor circulation","thirst","sleepwalking","skin oiliness","sneezing","bladder mass","knee cramps or spasms","premature ejaculation","leg weakness","posture problems","bleeding in mouth","tongue bleeding","change in skin mole size or color","penis redness","penile discharge","shoulder lump or mass","polyuria","cloudy eye","hysterical behavior","arm lump or mass","nightmares","bleeding gums","pain in gums","bedwetting","diaper rash","lump or mass of breast","vaginal bleeding after menopause","infrequent menstruation","mass on vulva","jaw pain","itching of scrotum","postpartum problems of the breast","eyelid retracted","hesitancy","elbow lump or mass","muscle weakness","throat redness","joint swelling","tongue pain","redness in or around nose","wrinkles on skin","foot or toe weakness","hand or finger cramps or spasms","back stiffness or tightness","wrist lump or mass","skin pain","low back stiffness or tightness","low urine output","skin on head or neck looks infected","stuttering or stammering","problems with orgasm","nose deformity","lump over jaw","sore in nose","hip weakness","back swelling","ankle stiffness or tightness","ankle weakness","neck weakness"]
+    
+    const symptomDiseaseMap = {
+    "anxiety and nervousness": {"panic disorder": 0.8, "social anxiety disorder": 0.6},
+    "depression": {"major depressive disorder": 0.9, "bipolar disorder": 0.7},
+    "shortness of breath": {"asthma": 0.8, "pulmonary embolism": 0.6},
+    "depressive or psychotic symptoms": {"schizophrenia": 0.9, "bipolar disorder": 0.7},
+    "sharp chest pain": {"heart attack": 0.9, "pneumothorax": 0.7},
+    "dizziness": {"vertigo": 0.8, "inner ear infection": 0.6},
+    "insomnia": {"insomnia disorder": 0.9, "sleep apnea": 0.7},
+    "abnormal involuntary movements": {"Parkinson's disease": 0.8, "Huntington's disease": 0.6},
+    "chest tightness": {"angina": 0.8, "heart attack": 0.7},
+    "palpitations": {"atrial fibrillation": 0.8, "panic disorder": 0.6},
+    "irregular heartbeat": {"atrial fibrillation": 0.9, "heart attack": 0.7},
+    "breathing fast": {"anxiety": 0.8, "asthma": 0.6},
+    "hoarse voice": {"laryngitis": 0.8, "vocal cord polyp": 0.7},
+    "sore throat": {"pharyngitis": 0.8, "tonsillitis": 0.7},
+    "difficulty speaking": {"aphasia": 0.8, "stroke": 0.6},
+    "cough": {"common cold": 0.8, "bronchitis": 0.7},
+    "nasal congestion": {"common cold": 0.8, "sinusitis": 0.7},
+    "throat swelling": {"angioedema": 0.8, "tonsillitis": 0.6},
+    "diminished hearing": {"hearing loss": 0.8, "ear infection": 0.7},
+    "lump in throat": {"globus sensation": 0.8, "thyroid nodule": 0.6},
+    "throat feels tight": {"globus sensation": 0.8, "angioedema": 0.7},
+    "difficulty in swallowing": {"dysphagia": 0.8, "esophageal cancer": 0.7},
+    "skin swelling": {"edema": 0.8, "cellulitis": 0.7},
+    "retention of urine": {"urinary retention": 0.8, "benign prostatic hyperplasia": 0.6},
+    "groin mass": {"inguinal hernia": 0.8, "lymphadenopathy": 0.7},
+    "leg pain": {"muscle strain": 0.8, "deep vein thrombosis": 0.6},
+    "hip pain": {"hip osteoarthritis": 0.8, "trochanteric bursitis": 0.7},
+    "suprapubic pain": {"cystitis": 0.8, "bladder cancer": 0.6},
+    "blood in stool": {"hemorrhoids": 0.8, "colon cancer": 0.7},
+    "lack of growth": {"growth hormone deficiency": 0.8, "Turner syndrome": 0.7},
+    "emotional symptoms": {"depression": 0.8, "bipolar disorder": 0.6},
+    "elbow weakness": {"radial nerve palsy": 0.8, "tennis elbow": 0.7},
+    "back weakness": {"muscle strain": 0.8, "spinal stenosis": 0.7},
+    "pus in sputum": {"pneumonia": 0.8, "bronchitis": 0.6},
+    "symptoms of the scrotum and testes": {"epididymitis": 0.8, "testicular cancer": 0.7},
+    "swelling of scrotum": {"hydrocele": 0.8, "varicocele": 0.6},
+    "pain in testicles": {"testicular torsion": 0.8, "orchitis": 0.7},
+    "flatulence": {"gastroenteritis": 0.8, "irritable bowel syndrome": 0.7},
+    "pus draining from ear": {"otitis media": 0.8, "ear infection": 0.6},
+    "jaundice": {"hepatitis": 0.8, "liver cancer": 0.7},
+    "mass in scrotum": {"testicular cancer": 0.8, "spermatocele": 0.7},
+    "white discharge from eye": {"conjunctivitis": 0.8, "keratitis": 0.6},
+    "irritable infant": {"colic": 0.8, "gastroesophageal reflux": 0.7},
+    "abusing alcohol": {"alcoholism": 0.8, "alcohol poisoning": 0.6},
+    "fainting": {"vasovagal syncope": 0.8, "hypoglycemia": 0.7},
+    "hostile behavior": {"conduct disorder": 0.8, "oppositional defiant disorder": 0.7},
+    "drug abuse": {"substance use disorder": 0.8, "drug overdose": 0.6},
+    "sharp abdominal pain": {"appendicitis": 0.8, "pancreatitis": 0.7},
+    "feeling ill": {"flu": 0.8, "mononucleosis": 0.6},
+    "vomiting": {"gastroenteritis": 0.8, "food poisoning": 0.7},
+    "headache": {"tension headache": 0.8, "migraine": 0.7},
+    "nausea": {"gastroenteritis": 0.8, "pregnancy": 0.7},
+    "diarrhea": {"gastroenteritis": 0.8, "irritable bowel syndrome": 0.7},
+    "vaginal itching": {"yeast infection": 0.8, "bacterial vaginosis": 0.7},
+    "vaginal dryness": {"vaginal atrophy": 0.8, "menopause": 0.6},
+    "painful urination": {"urinary tract infection": 0.8, "kidney stones": 0.7},
+    "involuntary urination": {"urinary incontinence": 0.8, "overactive bladder": 0.7},
+    "pain during intercourse": {"dyspareunia": 0.8, "vaginismus": 0.6},
+    "frequent urination": {"diabetes": 0.8, "urinary tract infection": 0.7},
+    "lower abdominal pain": {"appendicitis": 0.8, "diverticulitis": 0.7},
+    "vaginal discharge": {"bacterial vaginosis": 0.8, "yeast infection": 0.7},
+    "blood in urine": {"urinary tract infection": 0.8, "kidney stones": 0.7},
+    "hot flashes": {"menopause": 0.8, "thyroid disease": 0.7},
+    "intermenstrual bleeding": {"uterine fibroids": 0.8, "endometrial polyp": 0.7},
+    "hand or finger pain": {"arthritis": 0.8, "carpal tunnel syndrome": 0.7},
+    "wrist pain": {"carpal tunnel syndrome": 0.8, "wrist sprain": 0.7},
+    "hand or finger swelling": {"arthritis": 0.8, "gout": 0.7},
+    "arm pain": {"rotator cuff injury": 0.8, "heart attack": 0.7},
+    "wrist swelling": {"wrist sprain": 0.8, "arthritis": 0.7},
+    "arm stiffness or tightness": {"frozen shoulder": 0.8, "muscle strain": 0.7},
+    "arm swelling": {"lymphedema": 0.8, "cellulitis": 0.7},
+    "hand or finger stiffness or tightness": {"arthritis": 0.8, "trigger finger": 0.7},
+    "wrist stiffness or tightness": {"carpal tunnel syndrome": 0.8, "tenosynovitis": 0.7},
+    "lip swelling": {"angioedema": 0.8, "contact dermatitis": 0.7},
+    "toothache": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "abnormal appearing skin": {"eczema": 0.8, "psoriasis": 0.7},
+    "skin lesion": {"skin cancer": 0.8, "basal cell carcinoma": 0.7},
+    "acne or pimples": {"acne vulgaris": 0.8, "rosacea": 0.7},
+    "dry lips": {"chapped lips": 0.8, "vitamin deficiency": 0.7},
+    "facial pain": {"sinusitis": 0.8, "temporomandibular joint disorder": 0.7},
+    "mouth ulcer": {"canker sore": 0.8, "oral thrush": 0.7},
+    "skin growth": {"skin tag": 0.8, "seborrheic keratosis": 0.7},
+    "eye deviation": {"strabismus": 0.8, "ocular motor nerve palsy": 0.7},
+    "diminished vision": {"cataracts": 0.8, "macular degeneration": 0.7},
+    "double vision": {"binocular diplopia": 0.8, "stroke": 0.7},
+    "cross-eyed": {"strabismus": 0.8, "convergence insufficiency": 0.7},
+    "symptoms of eye": {"conjunctivitis": 0.8, "keratitis": 0.7},
+    "pain in eye": {"conjunctivitis": 0.8, "corneal abrasion": 0.7},
+    "eye moves abnormally": {"nystagmus": 0.8, "ocular motor nerve palsy": 0.7},
+    "abnormal movement of eyelid": {"blepharospasm": 0.8, "ptosis": 0.7},
+    "foreign body sensation in eye": {"corneal abrasion": 0.8, "dry eye syndrome": 0.7},
+    "irregular appearing scalp": {"psoriasis": 0.8, "seborrheic dermatitis": 0.7},
+    "swollen lymph nodes": {"lymphadenopathy": 0.8, "mononucleosis": 0.7},
+    "back pain": {"muscle strain": 0.8, "herniated disc": 0.7},
+    "neck pain": {"muscle strain": 0.8, "whiplash": 0.7},
+    "low back pain": {"muscle strain": 0.8, "herniated disc": 0.7},
+    "pain of the anus": {"hemorrhoids": 0.8, "anal fissure": 0.7},
+    "pain during pregnancy": {"round ligament pain": 0.8, "pubic symphysis dysfunction": 0.7},
+    "pelvic pain": {"endometriosis": 0.8, "ovarian cyst": 0.7},
+    "impotence": {"erectile dysfunction": 0.8, "low testosterone": 0.7},
+    "infant spitting up": {"gastroesophageal reflux": 0.8, "pyloric stenosis": 0.7},
+    "vomiting blood": {"gastrointestinal bleeding": 0.8, "peptic ulcer disease": 0.7},
+    "regurgitation": {"gastroesophageal reflux": 0.8, "hiatal hernia": 0.7},
+    "burning abdominal pain": {"gastroesophageal reflux": 0.8, "peptic ulcer disease": 0.7},
+    "restlessness": {"anxiety": 0.8, "hyperthyroidism": 0.7},
+    "symptoms of infants": {"colic": 0.8, "gastroesophageal reflux": 0.7},
+    "wheezing": {"asthma": 0.8, "chronic obstructive pulmonary disease": 0.7},
+    "peripheral edema": {"edema": 0.8, "heart failure": 0.7},
+    "neck mass": {"thyroid nodule": 0.8, "lymphadenopathy": 0.7},
+    "ear pain": {"otitis media": 0.8, "ear infection": 0.7},
+    "jaw swelling": {"dental abscess": 0.8, "salivary gland infection": 0.7},
+    "mouth dryness": {"xerostomia": 0.8, "dehydration": 0.7},
+    "neck swelling": {"thyroid goiter": 0.8, "lymphadenopathy": 0.7},
+    "knee pain": {"osteoarthritis": 0.8, "meniscus tear": 0.7},
+    "foot or toe pain": {"plantar fasciitis": 0.8, "gout": 0.7},
+    "bowlegged or knock-kneed": {"bowlegs": 0.8, "knock knees": 0.7},
+    "ankle pain": {"ankle sprain": 0.8, "arthritis": 0.7},
+    "bones are painful": {"osteoporosis": 0.8, "bone cancer": 0.7},
+    "knee weakness": {"osteoarthritis": 0.8, "ligament injury": 0.7},
+    "elbow pain": {"tennis elbow": 0.8, "golfer's elbow": 0.7},
+    "knee swelling": {"osteoarthritis": 0.8, "bursitis": 0.7},
+    "skin moles": {"nevus": 0.8, "melanoma": 0.7},
+    "knee lump or mass": {"baker's cyst": 0.8, "lipoma": 0.7},
+    "weight gain": {"hypothyroidism": 0.8, "polycystic ovary syndrome": 0.7},
+    "problems with movement": {"Parkinson's disease": 0.8, "multiple sclerosis": 0.7},
+    "knee stiffness or tightness": {"osteoarthritis": 0.8, "bursitis": 0.7},
+    "leg swelling": {"edema": 0.8, "deep vein thrombosis": 0.7},
+    "foot or toe swelling": {"edema": 0.8, "lymphedema": 0.7},
+    "heartburn": {"gastroesophageal reflux": 0.8, "peptic ulcer disease": 0.7},
+    "smoking problems": {"chronic obstructive pulmonary disease": 0.8, "lung cancer": 0.7},
+    "muscle pain": {"fibromyalgia": 0.8, "myositis": 0.7},
+    "infant feeding problem": {"oral aversion": 0.8, "failure to thrive": 0.7},
+    "recent weight loss": {"cancer": 0.8, "hyperthyroidism": 0.7},
+    "problems with shape or size of breast": {"fibrocystic breast changes": 0.8, "breast cancer": 0.7},
+    "underweight": {"eating disorder": 0.8, "malnutrition": 0.7},
+    "difficulty eating": {"dysphagia": 0.8, "anorexia nervosa": 0.7},
+    "scanty menstrual flow": {"oligomenorrhea": 0.8, "hypothyroidism": 0.7},
+    "vaginal pain": {"vulvodynia": 0.8, "vaginismus": 0.7},
+    "vaginal redness": {"vulvovaginitis": 0.8, "yeast infection": 0.7},
+    "vulvar irritation": {"vulvovaginitis": 0.8, "contact dermatitis": 0.7},
+    "weakness": {"myasthenia gravis": 0.8, "muscular dystrophy": 0.7},
+    "decreased heart rate": {"bradycardia": 0.8, "heart block": 0.7},
+    "increased heart rate": {"tachycardia": 0.8, "anxiety": 0.7},
+    "bleeding or discharge from nipple": {"breast cancer": 0.8, "ductal carcinoma in situ": 0.7},
+    "ringing in ear": {"tinnitus": 0.8, "ear infection": 0.7},
+    "plugged feeling in ear": {"ear wax blockage": 0.8, "ear infection": 0.7},
+    "itchy ear(s)": {"otitis externa": 0.8, "ear infection": 0.7},
+    "frontal headache": {"tension headache": 0.8, "migraine": 0.7},
+    "fluid in ear": {"otitis media": 0.8, "ear infection": 0.7},
+    "neck stiffness or tightness": {"muscle strain": 0.8, "meningitis": 0.7},
+    "spots or clouds in vision": {"cataracts": 0.8, "macular degeneration": 0.7},
+    "eye redness": {"conjunctivitis": 0.8, "keratitis": 0.7},
+    "lacrimation": {"dry eye syndrome": 0.8, "conjunctivitis": 0.7},
+    "itchiness of eye": {"allergic conjunctivitis": 0.8, "dry eye syndrome": 0.7},
+    "blindness": {"glaucoma": 0.8, "retinal detachment": 0.7},
+    "eye burns or stings": {"chemical burn": 0.8, "foreign body in eye": 0.7},
+    "itchy eyelid": {"blepharitis": 0.8, "allergic conjunctivitis": 0.7},
+    "feeling cold": {"hypothyroidism": 0.8, "anemia": 0.7},
+    "decreased appetite": {"anorexia nervosa": 0.8, "hyperthyroidism": 0.7},
+    "excessive appetite": {"hyperthyroidism": 0.8, "diabetes": 0.7},
+    "excessive anger": {"intermittent explosive disorder": 0.8, "conduct disorder": 0.7},
+    "loss of sensation": {"peripheral neuropathy": 0.8, "stroke": 0.7},
+    "focal weakness": {"stroke": 0.8, "multiple sclerosis": 0.7},
+    "slurring words": {"stroke": 0.8, "brain tumor": 0.7},
+    "drooling": {"stroke": 0.8, "Parkinson's disease": 0.7},
+    "jaw pain": {"temporomandibular joint disorder": 0.8, "dental abscess": 0.7},
+    "tooth sensitivity": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "loss of consciousness": {"syncope": 0.8, "seizure": 0.7},
+    "loss of coordination": {"multiple sclerosis": 0.8, "cerebellar stroke": 0.7},
+    "muscle twitching": {"fasciculations": 0.8, "electrolyte imbalance": 0.7},
+    "weakness of arm": {"radial nerve palsy": 0.8, "stroke": 0.7},
+    "weakness of leg": {"sciatica": 0.8, "stroke": 0.7},
+    "paresthesia of arm": {"carpal tunnel syndrome": 0.8, "nerve entrapment": 0.7},
+    "paresthesia of leg": {"sciatica": 0.8, "peripheral neuropathy": 0.7},
+    "hematemesis": {"upper gastrointestinal bleeding": 0.8, "peptic ulcer disease": 0.7},
+    "low blood pressure": {"hypotension": 0.8, "dehydration": 0.7},
+    "high blood pressure": {"hypertension": 0.8, "hyperthyroidism": 0.7},
+    "snoring": {"obstructive sleep apnea": 0.8, "nasal congestion": 0.7},
+    "excessive daytime sleepiness": {"obstructive sleep apnea": 0.8, "narcolepsy": 0.7},
+    "trouble concentrating": {"attention deficit hyperactivity disorder": 0.8, "anxiety": 0.7},
+    "seizures": {"epilepsy": 0.8, "stroke": 0.7},
+    "memory loss": {"Alzheimer's disease": 0.8, "dementia": 0.7},
+    "balance problem": {"vertigo": 0.8, "cerebellar stroke": 0.7},
+    "speech difficulty": {"aphasia": 0.8, "stroke": 0.7},
+    "difficulty walking": {"osteoarthritis": 0.8, "Parkinson's disease": 0.7},
+    "numbness of arm": {"peripheral neuropathy": 0.8, "stroke": 0.7},
+    "numbness of leg": {"sciatica": 0.8, "peripheral neuropathy": 0.7},
+    "weakness of both arms": {"Guillain-Barré syndrome": 0.8, "stroke": 0.7},
+    "weakness of both legs": {"Guillain-Barré syndrome": 0.8, "peripheral neuropathy": 0.7},
+    "paresthesia of both arms": {"carpal tunnel syndrome": 0.8, "nerve entrapment": 0.7},
+    "paresthesia of both legs": {"sciatica": 0.8, "peripheral neuropathy": 0.7},
+    "numbness of both arms": {"peripheral neuropathy": 0.8, "stroke": 0.7},
+    "numbness of both legs": {"sciatica": 0.8, "peripheral neuropathy": 0.7},
+    "weakness of one side of the body": {"stroke": 0.8, "Bell's palsy": 0.7},
+    "numbness of one side of the body": {"stroke": 0.8, "multiple sclerosis": 0.7},
+    "chest pain": {"angina": 0.8, "heart attack": 0.7},
+    "breath-holding spells": {"breath-holding spells": 0.8, "seizure": 0.7},
+    "snoring symptoms": {"obstructive sleep apnea": 0.8, "nasal congestion": 0.7},
+    "ear discharge": {"otitis externa": 0.8, "ear infection": 0.7},
+    "problems with smell": {"sinusitis": 0.8, "nasal polyps": 0.7},
+    "nosebleed": {"epistaxis": 0.8, "sinusitis": 0.7},
+    "difficulty smelling": {"sinusitis": 0.8, "nasal polyps": 0.7},
+    "nose swelling": {"sinusitis": 0.8, "nasal polyps": 0.7},
+    "symptoms of throat": {"pharyngitis": 0.8, "tonsillitis": 0.7},
+    "symptoms of the tongue": {"glossitis": 0.8, "geographic tongue": 0.7},
+    "facial swelling": {"angioedema": 0.8, "salivary gland infection": 0.7},
+    "tongue swelling": {"angioedema": 0.8, "salivary gland infection": 0.7},
+    "symptoms of the lips": {"herpes labialis": 0.8, "angular cheilitis": 0.7},
+    "symptoms of the mouth": {"oral thrush": 0.8, "aphthous ulcer": 0.7},
+    "symptoms of the jaw": {"TMJ disorder": 0.8, "temporomandibular joint disorder": 0.7},
+    "symptoms of the teeth": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "jaw stiffness or tightness": {"temporomandibular joint disorder": 0.8, "TMJ disorder": 0.7},
+    "gum swelling": {"gingivitis": 0.8, "periodontitis": 0.7},
+    "jaw clicking": {"TMJ disorder": 0.8, "temporomandibular joint disorder": 0.7},
+    "symptoms of the palate": {"oral thrush": 0.8, "canker sore": 0.7},
+    "gum pain": {"gingivitis": 0.8, "periodontitis": 0.7},
+    "tooth decay": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "mouth swelling": {"angioedema": 0.8, "salivary gland infection": 0.7},
+    "tooth sensitivity to hot or cold": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "jaw pain on one side": {"TMJ disorder": 0.8, "temporomandibular joint disorder": 0.7},
+    "painful gums": {"gingivitis": 0.8, "periodontitis": 0.7},
+    "tooth mobility": {"periodontitis": 0.8, "tooth abscess": 0.7},
+    "tooth sensitivity to pressure": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "tooth sensitivity in multiple teeth": {"dental caries": 0.8, "tooth abscess": 0.7},
+    "gum bleeding": {"gingivitis": 0.8, "periodontitis": 0.7},
+    "symptoms of the jaw": {"TMJ disorder": 0.8, "temporomandibular joint disorder": 0.7},
+    "painful lymph nodes": {"lymphadenopathy": 0.8, "infectious mononucleosis": 0.7},
+    "neck lump": {"thyroid nodule": 0.8, "lymphadenopathy": 0.7},
+    "neck rash": {"contact dermatitis": 0.8, "seborrheic dermatitis": 0.7},
+    "face rash": {"rosacea": 0.8, "contact dermatitis": 0.7},
+    "facial tingling": {"trigeminal neuralgia": 0.8, "Bell's palsy": 0.7},
+    "facial pain on one side": {"trigeminal neuralgia": 0.8, "Bell's palsy": 0.7},
+    "facial droop": {"Bell's palsy": 0.8, "stroke": 0.7},
+    "facial twitching": {"hemifacial spasm": 0.8, "facial tic": 0.7},
+    "facial swelling on one side": {"dental abscess": 0.8, "parotitis": 0.7},
+    "facial numbness on one side": {"stroke": 0.8, "Bell's palsy": 0.7},
+    "facial redness": {"rosacea": 0.8, "contact dermatitis": 0.7},
+    "facial itching": {"contact dermatitis": 0.8, "rosacea": 0.7},
+    "facial weakness on one side": {"Bell's palsy": 0.8, "stroke": 0.7},
+    "facial swelling on both sides": {"angioedema": 0.8, "parotitis": 0.7},
+    "facial numbness on both sides": {"stroke": 0.8, "facial paresthesia": 0.7},
+    "facial swelling on one side": {"angioedema": 0.8, "dental abscess": 0.7},
+    "facial numbness on one side": {"stroke": 0.8, "facial paresthesia": 0.7},
+    "drug use": {
+        "Substance Use Disorder": 0.9
+    },
+    "smoking": {
+        "Tobacco Use Disorder": 0.9
+    },
+    "coughing up blood": {
+        "Hemoptysis": 0.9
+    },
+    "shortness of breath": {
+        "Dyspnea": 0.9
+    },
+    "wheezing": {
+        "Wheezing": 0.9
+    },
+    "chest pain": {
+        "Chest Pain": 0.9
+    },
+    "fast heart rate": {
+        "Tachycardia": 0.9
+    },
+    "high blood pressure": {
+        "Hypertension": 0.9
+    },
+    "pain with breathing": {
+        "Pleuritic Chest Pain": 0.9
+    },
+    "pain in the chest": {
+        "Chest Pain": 0.9
+        },
+    "pain in the back": {
+        "Back Pain": 0.9
+        },
+    "pain in the neck": {
+        "Neck Pain": 0.9
+
+    }
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Function to create checkboxes for symptoms
+    function createCheckboxes(symptoms) {
+        var symptomSelector = document.getElementById("symptom-selector");
+        symptoms.forEach(function(symptom, index) {
+            var checkboxDiv = document.createElement("div");
+            checkboxDiv.className = "checkbox";
+            var checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = "symptom" + (index + 1);
+            checkbox.value = symptom;
+            var label = document.createElement("label");
+            label.htmlFor = "symptom" + (index + 1);
+            label.textContent = symptom;
+            checkboxDiv.appendChild(checkbox);
+            checkboxDiv.appendChild(label);
+            symptomSelector.appendChild(checkboxDiv);
+        });
+    }
+
+    
+
+    // Array of symptoms (Replace with your actual list of symptoms)
+    var symptoms = ["anxiety and nervousness","depression","shortness of breath","depressive or psychotic symptoms","sharp chest pain","dizziness","insomnia","abnormal involuntary movements","chest tightness","palpitations","irregular heartbeat","breathing fast","hoarse voice","sore throat","difficulty speaking","cough","nasal congestion","throat swelling","diminished hearing","lump in throat","throat feels tight",
+"difficulty in swallowing","skin swelling","retention of urine","groin mass","leg pain","hip pain","suprapubic pain","blood in stool","lack of growth","emotional symptoms","elbow weakness","back weakness","pus in sputum","symptoms of the scrotum and testes","swelling of scrotum","pain in testicles","flatulence","pus draining from ear","jaundice","mass in scrotum","white discharge from eye","irritable infant","abusing alcohol","fainting","hostile behavior",
+"drug abuse","sharp abdominal pain","feeling ill","vomiting","headache","nausea","diarrhea","vaginal itching","vaginal dryness","painful urination","involuntary urination","pain during intercourse","frequent urination","lower abdominal pain","vaginal discharge","blood in urine","hot flashes","intermenstrual bleeding","hand or finger pain","wrist pain","hand or finger swelling","arm pain","wrist swelling","arm stiffness or tightness","arm swelling","hand or finger stiffness or tightness",
+"wrist stiffness or tightness","lip swelling","toothache","abnormal appearing skin","skin lesion","acne or pimples","dry lips","facial pain","mouth ulcer","skin growth","eye deviation","diminished vision","double vision","cross-eyed","symptoms of eye","pain in eye","eye moves abnormally","abnormal movement of eyelid","foreign body sensation in eye","irregular appearing scalp","swollen lymph nodes","back pain","neck pain","low back pain","pain of the anus","pain during pregnancy","pelvic pain",
+"impotence","infant spitting up","vomiting blood","regurgitation","burning abdominal pain","restlessness","symptoms of infants","wheezing","peripheral edema","neck mass","ear pain","jaw swelling","mouth dryness","neck swelling","knee pain","foot or toe pain","bowlegged or knock-kneed","ankle pain","bones are painful","knee weakness","elbow pain","knee swelling","skin moles","knee lump or mass","weight gain","problems with movement","knee stiffness or tightness","leg swelling","foot or toe swelling","heartburn",
+"smoking problems","muscle pain","infant feeding problem","recent weight loss","problems with shape or size of breast","underweight","difficulty eating","scanty menstrual flow","vaginal pain","vaginal redness","vulvar irritation","weakness","decreased heart rate","increased heart rate","bleeding or discharge from nipple","ringing in ear","plugged feeling in ear","itchy ear(s)","frontal headache","fluid in ear","neck stiffness or tightness",
+"spots or clouds in vision","eye redness","lacrimation","itchiness of eye","blindness","eye burns or stings","itchy eyelid","feeling cold","decreased appetite","excessive appetite","excessive anger","loss of sensation","focal weakness","slurring words","symptoms of the face","disturbance of memory","paresthesia","side pain","fever","shoulder pain","shoulder stiffness or tightness","shoulder weakness","arm cramps or spasms","shoulder swelling","tongue lesions","leg cramps or spasms","abnormal appearing tongue","ache all over","lower body pain","problems during pregnancy","spotting or bleeding during pregnancy","cramps and spasms",
+"upper abdominal pain","stomach bloating","changes in stool appearance","unusual color or odor to urine","kidney mass","swollen abdomen","symptoms of prostate","leg stiffness or tightness","difficulty breathing","rib pain","joint pain","muscle stiffness or tightness","pallor","hand or finger lump or mass","chills","groin pain","fatigue","abdominal distention","regurgitation.1","symptoms of the kidneys","melena","flushing","coughing up sputum","seizures","delusions or hallucinations","shoulder cramps or spasms","joint stiffness or tightness","pain or soreness of breast","excessive urination at night","bleeding from eye","rectal bleeding","constipation","temper problems",
+"coryza","wrist weakness","eye strain","hemoptysis","lymphedema","skin on leg or foot looks infected","allergic reaction","congestion in chest","muscle swelling","pus in urine","abnormal size or shape of ear","low back weakness","sleepiness","apnea","abnormal breathing sounds","excessive growth","elbow cramps or spasms","feeling hot and cold",
+"blood clots during menstrual periods","absence of menstruation", "pulling at ears","gum pain","redness in ear", "fluid retention", "flu-like syndrome","sinus congestion","painful sinuses","fears and phobias","recent pregnancy","uterine contractions","burning chest pain","back cramps or spasms","stiffness all over","muscle cramps, contractures, or spasms",
+"low back cramps or spasms","back mass or lump","nosebleed","long menstrual periods","heavy menstrual flow","unpredictable menstruation","painful menstruation","infertility","frequent menstruation","sweating","mass on eyelid","swollen eye","eyelid swelling","eyelid lesion or rash","unwanted hair","symptoms of bladder","irregular appearing nails","itching of skin",
+"hurts to breath","nailbiting","skin dryness, peeling, scaliness, or roughness","skin on arm or hand looks infected","skin irritation","itchy scalp","hip swelling","incontinence of stool","foot or toe cramps or spasms","warts","bumps on penis","too little hair","foot or toe lump or mass","skin rash","mass or swelling around the anus","low back swelling","ankle swelling",
+"hip lump or mass","drainage in throat","dry or flaky scalp","premenstrual tension or irritability","feeling hot","feet turned in","foot or toe stiffness or tightness","pelvic pressure","elbow swelling","elbow stiffness or tightness","early or late onset of menopause","mass on ear","bleeding from ear","hand or finger weakness","low self-esteem","throat irritation","itching of the anus","swollen or red tonsils","irregular belly button","swollen tongue","lip sore","vulvar sore","hip stiffness or tightness","mouth pain","arm weakness","leg lump or mass","disturbance of smell or taste","discharge in stools","penis pain",
+"loss of sex drive","obsessions and compulsions","antisocial behavior","neck cramps or spasms","pupils unequal","poor circulation","thirst","sleepwalking","skin oiliness","sneezing","bladder mass","knee cramps or spasms","premature ejaculation","leg weakness","posture problems","bleeding in mouth","tongue bleeding","change in skin mole size or color","penis redness","penile discharge","shoulder lump or mass","polyuria","cloudy eye","hysterical behavior","arm lump or mass","nightmares","bleeding gums","pain in gums",
+"bedwetting","diaper rash","lump or mass of breast","vaginal bleeding after menopause","infrequent menstruation","mass on vulva","jaw pain","itching of scrotum","postpartum problems of the breast","eyelid retracted","hesitancy","elbow lump or mass","muscle weakness","throat redness","joint swelling","tongue pain","redness in or around nose","wrinkles on skin","foot or toe weakness","hand or finger cramps or spasms","back stiffness or tightness","wrist lump or mass","skin pain","low back stiffness or tightness","low urine output","skin on head or neck looks infected","stuttering or stammering","problems with orgasm","nose deformity","lump over jaw","sore in nose",
+"hip weakness","back swelling","ankle stiffness or tightness","ankle weakness","neck weakness"];
+
+    // Call the function to create checkboxes for symptoms
+    createCheckboxes(symptoms);
+
+    // Function to handle prediction on button click
+    document.getElementById("predict-button").addEventListener("click", function() {
+        var selectedSymptoms = [];
+        var checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+        checkboxes.forEach(function(checkbox) {
+            selectedSymptoms.push(checkbox.value);
+        });
+
+        let potentialDiseases = {};
+  
+        for (var i = 0; i < selectedSymptoms.length; i++) {
+            var symptom = selectedSymptoms[i];
+            const diseaseWeights = symptomDiseaseMap[symptom] || {};
+            for (const disease in diseaseWeights) {
+                potentialDiseases[disease] = (potentialDiseases[disease] || 0) + diseaseWeights[disease];
+            }
+        }
+        selectedSymptoms.forEach(function(symptom) {
+            const diseaseWeights = symptomDiseaseMap[symptom] || {};
+            for (const disease in diseaseWeights) {
+                potentialDiseases[disease] = (potentialDiseases[disease] || 0) + diseaseWeights[disease];
+            }
+        });
+
+        if (selectedSymptoms.length === 0) {
+        document.getElementById('prediction-result').innerHTML = "Please select symptoms to predict a disease.";
+    } else if (Object.keys(potentialDiseases).length === 0) {
+        document.getElementById('prediction-result').innerHTML = "No conclusive diagnosis based on selected symptoms. Your symptoms may be rare or unrelated. Please consult a doctor for proper diagnosis.";
+    } else {
+        let highestScore = 0;
+        let predictedDisease = null;
+        for (const disease in potentialDiseases) {
+            if (potentialDiseases[disease] > highestScore) {
+                highestScore = potentialDiseases[disease];
+                predictedDisease = disease;
+            }
+        }
+        document.getElementById('prediction-result').innerHTML = `Possible Disease: ${predictedDisease}`;
+    }
+
+
+        /*
+        if (Object.keys(potentialDiseases).length === 0) {
+            document.getElementById('prediction-result').innerHTML = "No conclusive diagnosis based on selected symptoms. Your symptoms may be rare or unrelated. Please consult a doctor for proper diagnosis.";
+        }
+        else {
+            let highestScore = 0;
+            let predictedDisease = null;
+            for (const disease in potentialDiseases) {
+                if (potentialDiseases[disease] > highestScore) 
+                {
+                highestScore = potentialDiseases[disease];
+                predictedDisease = disease;
+                }
+        }
+        document.getElementById('prediction-result').innerHTML = `Possible Disease: ${predictedDisease}`;
+        }*/
+  // Predict the disease based on the selected symptoms
+
+        // Example: Replace this with your actual prediction logic
+        //var predictedDisease = "Some Disease";
+
+
+
+
+        // Display the predicted disease
+        //document.getElementById("prediction-result").innerText = "Possible Disease : " + predictedDisease;
+    });
+
+    // Scroll down when arrow is clicked
+    document.querySelector('.scroll-down-arrow').addEventListener('click', function() {
+        document.getElementById('symptom-selector').scrollTop += 50; // Adjust scroll amount as needed
+    });
+
+});
+
+</script>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Illness Forecasting</title>
+</head>
+<body>
+<h1>Illness Forecasting</h1>
+<h4>--- Disease Prediction System ---</h4>
+
+<h2>Select your symptoms :</h2>
+
+<div id="symptom-selector"></div>
+<br>
+<br>
+<div class="predict-button"><button id="predict-button"><span> Predict Disease</span> </button></div>
+
+<p id="prediction-result"></p>
+
+   <script src="script.js"></script>
+
+</body>
+</html>
